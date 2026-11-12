@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dengiz Jangi (Marskoy Boy)</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #06b6d4;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --hit: #ef4444;
+            --miss: #64748b;
+            --water: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .menu-screen, .game-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background-color: #475569;
+        }
+        .btn-secondary:hover {
+            background-color: #334155;
+        }
+
+        .status-bar {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border-left: 5px solid var(--accent);
+            display: inline-block;
+        }
+
+        .boards-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .board-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .board-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 32px);
+            grid-template-rows: repeat(10, 32px);
+            gap: 3px;
+            background: #090d16;
+            padding: 8px;
+            border-radius: 8px;
+            border: 2px solid #334155;
+        }
+
+        .cell {
+            background-color: #1e293b;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell:hover {
+            background-color: #334155;
+        }
+
+        .cell.ship {
+            background-color: #475569;
+        }
+
+        .cell.hit {
+            background-color: var(--hit) !important;
+            animation: pulse 0.4s;
+        }
+
+        .cell.miss {
+            background-color: var(--miss) !important;
+        }
+        
+        .cell.miss::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #cbd5e1;
+            border-radius: 50%;
+        }
+
+        .cell.hit::after {
+            content: '✕';
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .controls-panel {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Dengiz Jangi</h1>
+        <p class="subtitle">Klassik strategik kema o'yini</p>
+
+        <!-- MENU SCREEN -->
+        <div id="menuScreen" class="menu-screen">
+            <p>O'yin rejimini tanlang:</p>
+            <div class="btn-group">
+                <button class="btn" onclick="startGame('vsAI')">🤖 Kompyuter bilan o'ynash</button>
+                <button class="btn" onclick="startGame('vsPlayer')">👥 Do'st bilan o'ynash (1 ta qurilmada)</button>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="game-screen hidden">
+            <div id="statusBar" class="status-bar">Kema joylashtirilyapti...</div>
+            
+            <div class="boards-container">
+                <div class="board-wrapper">
+                    <div id="board1Title" class="board-title">Sizning maydoningiz</div>
+                    <div id="playerBoard" class="board"></div>
+                </div>
+                <div class="board-wrapper" id="enemyBoardWrapper">
+                    <div id="board2Title" class="board-title">Dushman maydoni</div>
+                    <div id="enemyBoard" class="board"></div>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <button id="actionBtn" class="btn hidden" onclick="handleAction()">Tayyor</button>
+                <button class="btn btn-secondary" onclick="returnToMenu()">Menuga qaytish</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 10;
+        let gameMode = ''; // 'vsAI' yoki 'vsPlayer'
+        let turn = 1; // 1 - O'yinchi 1 / Siz, 2 - O'yinchi 2 / Kompyuter
+        let gameState = 'SETUP'; // 'SETUP', 'PLAYING', 'GAMEOVER'
+        
+        // Kemalar turlari (kattaligi va soni)
+        const shipSizes = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+        
+        let p1Board = createEmptyBoard();
+        let p2Board = createEmptyBoard();
+        let p1Shots = createEmptyBoard();
+        let p2Shots = createEmptyBoard();
+
+        let p1ShipsToPlace = [...shipSizes];
+        let p2ShipsToPlace = [...shipSizes];
+        let currentShipOrientation = 'H'; // 'H' - Gorizontal, 'V' - Vertikal
+
+        function createEmptyBoard() {
+            return Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+        }
+
+        function startGame(mode) {
+            gameMode = mode;
+            document.getElementById('menuScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            resetGameData();
+            startSetupPhase();
+        }
+
+        function returnToMenu() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('menuScreen').classList.remove('hidden');
+        }
+
+        function resetGameData() {
+            p1Board = createEmptyBoard();
+            p2Board = createEmptyBoard();
+            p1Shots = createEmptyBoard();
+            p2Shots = createEmptyBoard();
+            p1ShipsToPlace = [...shipSizes];
+            p2ShipsToPlace = [...shipSizes];
+            turn = 1;
+            gameState = 'SETUP';
+        }
+
+        function startSetupPhase() {
+            gameState = 'SETUP';
+            if (gameMode === 'vsAI') {
+                document.getElementById('board1Title').innerText = "Kema joylashtirish (Joy tanlang)";
+                document.getElementById('board2Title').classList.add('hidden');
+                document.getElementById('actionBtn').classList.remove('hidden');
+                document.getElementById('actionBtn').innerText = "Avtomatik joylash";
+                document.getElementById('statusBar').innerText = `Kema joylashtiring. Qolgan kema uzunligi: ${p1ShipsToPlace[0]}`;
+                autoPlaceShips(p1Board, p1ShipsToPlace); // Vaqtincha avto qo'yamiz yoki qo'lda bosish mumkin
+                // Keling soddalik uchun avtomatik yoki soddalashtirilgan joylashuv beramiz
+                renderBoards();
+            } else {
+                // vsPlayer uchun
+                document.getElementById('board2Title').classList.add('hidden');
+                document.getElementById('actionBtn').classList.remove('hidden');
+                document.getElementById('actionBtn').innerText = "Kemalarni avt. qo'yish";
+                document.getElementById('statusBar').innerText = `1-O'yinchi kemalarini joylashtirmoqda`;
+                autoPlaceShips(p1Board, p1ShipsToPlace);
+                renderBoards();
+            }
+        }
+
+        // Avtomatik kema joylashtiruvchi algoritm
+        function autoPlaceShips(board, ships) {
+            // Maydonni tozalash
+            for(let r=0; r<GRID_SIZE; r++) {
+                for(let c=0; c<GRID_SIZE; c++) {
+                    board[r][c] = 0;
+                }
+            }
+
+            for (let size of ships) {
+                let placed = false;
+                while (!placed) {
+                    let orient = Math.random() < 0.5 ? 'H' : 'V';
+                    let row = Math.floor(Math.random() * GRID_SIZE);
+                    let col = Math.floor(Math.random() * GRID_SIZE);
+
+                    if (canPlaceShip(board, row, col, size, orient)) {
+                        placeShip(board, row, col, size, orient);
+                        placed = true;
+                    }
+                }
+            }
+        }
+
+        function canPlaceShip(board, row, col, size, orient) {
+            for (let i = 0; i < size; i++) {
+                let r = orient === 'V' ? row + i : row;
+                let c = orient === 'H' ? col + i : col;
+
+                if (r >= GRID_SIZE || c >= GRID_SIZE) return false;
+                if (board[r][c] !== 0) return false;
+
+                // Atrofini tekshirish (kemalar yopishib qolmasligi uchun)
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        let nr = r + dr;
+                        let nc = c + dc;
+                        if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+                            if (board[nr][nc] === 1) return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function placeShip(board, row, col, size, orient) {
+            for (let i = 0; i < size; i++) {
+                let r = orient === 'V' ? row + i : row;
+                let c = orient === 'H' ? col + i : col;
+                board[r][c] = 1;
+            }
+        }
+
+        function handleAction() {
+            if (gameState === 'SETUP') {
+                if (gameMode === 'vsAI') {
+                    autoPlaceShips(p1Board, p1ShipsToPlace);
+                    autoPlaceShips(p2Board, p2ShipsToPlace); // AI ham qo'yadi
+                    startGamePlay();
+                } else {
+                    if (turn === 1) {
+                        autoPlaceShips(p2Board, p2ShipsToPlace);
+                        turn = 2;
+                        autoPlaceShips(p1Board, p1ShipsToPlace); // 2-o'yinchi uchun ham
+                        startGamePlay();
+                    }
+                }
+            }
+        }
+
+        function startGamePlay() {
+            gameState = 'PLAYING';
+            turn = 1;
+            document.getElementById('board2Title').classList.remove('hidden');
+            document.getElementById('actionBtn').classList.add('hidden');
+            document.getElementById('statusBar').innerText = gameMode === 'vsAI' ? "Sizning navbatingiz! Dushman maydoniga o'q uzing." : "1-O'yinchining navbati!";
+            renderBoards();
+        }
+
+        function renderBoards() {
+            const pBoardEl = document.getElementById('playerBoard');
+            const eBoardEl = document.getElementById('enemyBoard');
+            pBoardEl.innerHTML = '';
+            eBoardEl.innerHTML = '';
+
+            // O'yinchi 1 taxtasi
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    
+                    let currentBoard = (turn === 1 || gameState === 'SETUP') ? p1Board : p2Board;
+                    let currentShots = (turn === 1) ? p2Shots : p1Shots; // o'ziga qilingan otishlar
+
+                    if (currentBoard[r][c] === 1 && gameState === 'SETUP') {
+                        cell.classList.add('ship');
+                    }
+                    if (currentBoard[r][c] === 1 && currentShots[r][c] === 1) {
+                        cell.classList.add('hit');
+                    } else if (currentShots[r][c] === 1) {
+                        cell.classList.add('miss');
+                    }
+
+                    pBoardEl.appendChild(cell);
+                }
+            }
+
+            // Dushman / O'yinchi 2 taxtasi
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    
+                    let enemyBoard = (turn === 1) ? p2Board : p1Board;
+                    let myShots = (turn === 1) ? p1Shots : p2Shots;
+
+                    if (myShots[r][c] === 1) {
+                        if (enemyBoard[r][c] === 1) {
+                            cell.classList.add('hit');
+                        } else {
+                            cell.classList.add('miss');
+                        }
+                    }
+
+                    if (gameState === 'PLAYING') {
+                        cell.onclick = () => makeShot(r, c);
+                    }
+
+                    eBoardEl.appendChild(cell);
+                }
+            }
+        }
+
+        function makeShot(r, c) {
+            if (gameState !== 'PLAYING') return;
+
+            let enemyBoard = (turn === 1) ? p2Board : p1Board;
+            let myShots = (turn === 1) ? p1Shots : p2Shots;
+
+            if (myShots[r][c] === 1) return; // Allaqachon otilgan joy
+
+            myShots[r][c] = 1;
+
+            let hit = enemyBoard[r][c] === 1;
+
+            if (checkWin(enemyBoard, myShots)) {
+                gameState = 'GAMEOVER';
+                document.getElementById('statusBarinnerHTML', `<span style="color:var(--hit)">O'yin tugadi! ${turn === 1 ? '1-O\'yinchi (Siz)' : '2-O\'yinchi'} g'alaba qozondi! 🎉</span>`);
+                renderBoards();
+                return;
+            }
+
+            if (hit) {
+                document.getElementById('statusBar').innerText = "To'g'ri topdingiz! Yana bir bor o'q uzing.";
+                renderBoards();
+                if (gameMode === 'vsAI' && turn === 2) {
+                    // AI yana otishi kerak
+                    setTimeout(aiTurn, 800);
+                }
+                return;
+            }
+
+            // Navbatni almashtirish
+            if (gameMode === 'vsAI') {
+                turn = 2;
+                document.getElementById('statusBar').innerText = "Kompyuter o'ylamoqda...";
+                renderBoards();
+                setTimeout(aiTurn, 1000);
+            } else {
+                turn = turn === 1 ? 2 : 1;
+                document.getElementById('statusBar').innerText = `${turn}-O'yinchining navbati! Telefonni ${turn}-o'yinchiga bering va ekranni bosing.`;
+                renderBoards();
+            }
+        }
+
+        function aiTurn() {
+            if (gameState !== 'PLAYING') return;
+            
+            // Kompyuter tasodifiy o'q uzadi
+            let r, c;
+            do {
+                r = Math.floor(Math.random() * GRID_SIZE);
+                c = Math.floor(Math.random() * GRID_SIZE);
+            } while (p2Shots[r][c] === 1);
+
+            p2Shots[r][c] = 1;
+            let hit = p1Board[r][c] === 1;
+
+            if (checkWin(p1Board, p2Shots)) {
+                gameState = 'GAMEOVER';
+                document.getElementById('statusBar').innerText = "Kompyuter g'alaba qozondi! 🤖";
+                renderBoards();
+                return;
+            }
+
+            if (hit) {
+                document.getElementById('statusBar').innerText = "Kompyuter kemangizni urdi! U yana o'q uzmoqda...";
+                renderBoards();
+                setTimeout(aiTurn, 1000);
+            } else {
+                turn = 1;
+                document.getElementById('statusBar').innerText = "Sizning navbatingiz! Dushman maydoniga o'q uzing.";
+                renderBoards();
+            }
+        }
+
+        function checkWin(board, shots) {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (board[r][c] === 1 && shots[r][c] === 0) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>
